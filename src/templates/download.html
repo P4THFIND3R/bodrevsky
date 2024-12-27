@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Video</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: #f0f8ff;
+        }
+
+        .container {
+            background: #1e40af;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 26px;
+            margin-bottom: 20px;
+            color: #e0f2fe;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #bfdbfe;
+        }
+
+        input[type="url"], input[type="checkbox"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 8px;
+        }
+
+        input[type="url"] {
+            background: #e0f2fe;
+            color: #1e3a8a;
+        }
+
+        input[type="checkbox"] {
+            width: auto;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            color: #f0f8ff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .loading span {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #fff;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            margin-top: 10px;
+            color: #f87171;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Скачать видео</h1>
+    <h1 style="margin-top: -20px;">(youtube, instagram)</h1>
+    <form id="download-form" action="/youtube/download" method="get">
+        <label for="url" style="float: left">Ссылка на видео:</label>
+        <input type="url" id="url" name="url" placeholder="https://www.youtube.com/..." required>
+
+        <label for="audio_only" style="float: left">
+            <input type="checkbox" id="audio_only" name="audio_only">
+            Только звук
+        </label>
+
+        <button type="submit">Download</button>
+    </form>
+    <div class="loading" id="loading-indicator">
+        <span></span>
+    </div>
+    <div class="success" id="success-indicator">
+        <span></span>
+    </div>
+</div>
+<script>
+    const form = document.getElementById('download-form');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const successIndicator = document.getElementById('success-indicator');
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const url = document.getElementById('url').value;
+        const audioOnly = document.getElementById('audio_only').checked;
+
+        loadingIndicator.style.display = 'block';
+        successIndicator.style.display = 'none';
+
+        try {
+            const response = await fetch(`/youtube/download?url=${encodeURIComponent(url)}&audio_only=${audioOnly}`);
+            if (response.ok) {
+                const blob = await response.blob();
+                const downloadUrl = URL.createObjectURL(blob);
+
+                const link = document.createElement('a');
+                const disposition = response.headers.get('Content-Disposition');
+                const filename = disposition ? decodeURIComponent(disposition.split('filename*=utf-8\'\'')[1].split(';')[0]) : 'downloaded_file';
+                link.href = downloadUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                loadingIndicator.style.display = 'none';
+                successIndicator.style.display = 'block';
+            } else {
+                throw new Error(`Download failed: ${response.statusText}`);
+            }
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+            loadingIndicator.style.display = 'none';
+        }
+    });
+</script>
+</body>
+</html>
