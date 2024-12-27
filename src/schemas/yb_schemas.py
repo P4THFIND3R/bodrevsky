@@ -8,3 +8,4 @@ class YoutubeDownloaderResponse(BaseModel):
     desc: Optional[str] = None
     filepath: Optional[str] = None
     filename: Optional[str] = None
+    media_type: Optional[str] = None
